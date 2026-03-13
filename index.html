@@ -515,6 +515,7 @@ body {
 .hist-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .hist-dot.v { background: #22c55e; }
 .hist-dot.i { background: #ef4444; }
+.hist-dot.u { background: #facc15; }
 
 .hist-code { flex: 1; font-family: monospace; font-size: 0.72rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hist-time { font-size: 0.62rem; color: var(--gray); white-space: nowrap; }
@@ -750,6 +751,11 @@ body {
 
 .guest-select option { background: #1a1a1a; }
 
+/* ── Already-used ticket style ── */
+.ticket-top.used { background: linear-gradient(135deg, #1a1200 0%, #120d00 100%); }
+.result-icon.used { background: rgba(234,179,8,0.12); border: 1.5px solid rgba(234,179,8,0.4); }
+.result-headline.used { color: #facc15; }
+
 /* ripple */
 .ripple-flash {
   position: absolute;
@@ -964,7 +970,7 @@ let qrDB = [
 let history = [];
 let scanner = null;
 let scanning = false;
-let defaultGuests = 1;
+let usedCodes = {}; // { code: { time, guests } }
 
 renderDB();
 
@@ -1011,8 +1017,6 @@ async function stopScan() {
 function onScan(raw) {
   const code = raw.trim().toUpperCase();
   const entry = qrDB.find(e => e.code === code);
-  const valid = !!entry;
-  const guests = entry ? entry.guests : 0;
   const now = new Date();
   const time = now.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
 
@@ -1022,35 +1026,57 @@ function onScan(raw) {
   void rf.offsetWidth;
   rf.classList.add('pop');
 
-  history.unshift({ code, valid, guests, time });
+  // Already used?
+  if (usedCodes[code]) {
+    history.unshift({ code, status: 'used', guests: entry ? entry.guests : 0, time });
+    renderHistory();
+    showTicket(code, 'used', entry ? entry.guests : 0, time, usedCodes[code].time);
+    if (navigator.vibrate) navigator.vibrate([100, 60, 100, 60, 200]);
+    return;
+  }
+
+  const valid = !!entry;
+  const guests = entry ? entry.guests : 0;
+
+  if (valid) usedCodes[code] = { time, guests };
+
+  history.unshift({ code, status: valid ? 'valid' : 'invalid', guests, time });
   renderHistory();
-  showTicket(code, valid, guests, time);
+  renderDB();
+  showTicket(code, valid ? 'valid' : 'invalid', guests, time, null);
   if (navigator.vibrate) navigator.vibrate(valid ? [70,40,70] : [200]);
 }
 
 // ─── Ticket Result ────────────────────────────────────────────────────────────
-function showTicket(code, valid, guests, time) {
+function showTicket(code, status, guests, time, firstUseTime) {
   const top = document.getElementById('ticketTop');
-  top.className = `ticket-top ${valid ? 'valid' : 'invalid'}`;
+  top.className = `ticket-top ${status}`;
 
   const icon = document.getElementById('resIcon');
-  icon.className = `result-icon ${valid ? 'valid' : 'invalid'}`;
-  icon.textContent = valid ? '✅' : '❌';
+  icon.className = `result-icon ${status}`;
 
-  document.getElementById('resHeadline').className = `result-headline ${valid ? 'valid' : 'invalid'}`;
-  document.getElementById('resHeadline').textContent = valid ? 'Acceso Permitido' : 'Acceso Denegado';
-  document.getElementById('resSub').textContent = valid
-    ? 'Boleto válido — bienvenido al evento'
-    : 'Boleto no encontrado en el sistema';
+  const headlines = {
+    valid:   { icon: '✅', title: 'Acceso Permitido',  sub: 'Boleto válido — bienvenido al evento' },
+    invalid: { icon: '❌', title: 'Acceso Denegado',   sub: 'Boleto no encontrado en el sistema' },
+    used:    { icon: '⚠️', title: 'Boleto Ya Usado',   sub: `Escaneado previamente a las ${firstUseTime}` },
+  };
+
+  const h = headlines[status];
+  icon.textContent = h.icon;
+  document.getElementById('resHeadline').className = `result-headline ${status}`;
+  document.getElementById('resHeadline').textContent = h.title;
+  document.getElementById('resSub').textContent = h.sub;
 
   document.getElementById('resCode').textContent = code;
   document.getElementById('resTime').textContent = time;
 
-  const guestLabel = valid
-    ? `${guests} ${guests === 1 ? 'persona' : 'personas'}`
-    : '—';
+  const guestLabel = status !== 'invalid' ? `${guests} ${guests===1?'persona':'personas'}` : '—';
   document.getElementById('resGuests').textContent = guestLabel;
-  document.getElementById('tbGuests').textContent = valid ? `${guests} ${guests===1?'persona':'personas'}` : 'No autorizado';
+
+  const tbText = status === 'valid'   ? `${guests} ${guests===1?'persona':'personas'}`
+               : status === 'used'    ? '⚠ Ya escaneado'
+               : 'No autorizado';
+  document.getElementById('tbGuests').textContent = tbText;
 
   document.getElementById('overlay').classList.add('show');
 }
@@ -1069,13 +1095,18 @@ function renderDB() {
   document.getElementById('dbCount').textContent = `${qrDB.length} accesos`;
   const list = document.getElementById('dbList');
   if (!qrDB.length) { list.innerHTML = '<p class="empty">Base de datos vacía</p>'; return; }
-  list.innerHTML = qrDB.map((e, i) => `
-    <div class="db-row">
+  list.innerHTML = qrDB.map((e, i) => {
+    const used = !!usedCodes[e.code];
+    return `
+    <div class="db-row" style="${used ? 'opacity:0.55;' : ''}">
       <span class="db-code">${e.code}</span>
-      <span style="font-size:0.65rem;color:var(--orange);white-space:nowrap;margin-right:4px;">${e.guests}p</span>
+      ${used
+        ? `<span style="font-size:0.6rem;color:#facc15;background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.3);border-radius:20px;padding:2px 7px;white-space:nowrap;">USADO</span>`
+        : `<span style="font-size:0.65rem;color:var(--orange);white-space:nowrap;margin-right:4px;">${e.guests}p</span>`
+      }
       <button class="btn-del" onclick="delCode(${i})">✕</button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function addCode() {
@@ -1098,11 +1129,13 @@ function renderHistory() {
   document.getElementById('histCount').textContent = `${history.length} escaneos`;
   const list = document.getElementById('histList');
   if (!history.length) { list.innerHTML = '<p class="empty">Sin escaneos aún</p>'; return; }
+  const dotColor = { valid: 'v', invalid: 'i', used: 'u' };
   list.innerHTML = history.slice(0,30).map(h => `
     <div class="hist-row">
-      <div class="hist-dot ${h.valid?'v':'i'}"></div>
+      <div class="hist-dot ${h.status==='valid'?'v':h.status==='used'?'u':'i'}"></div>
       <span class="hist-code">${h.code}</span>
-      ${h.valid ? `<span style="font-size:0.62rem;color:var(--orange);white-space:nowrap;">${h.guests}p</span>` : ''}
+      ${h.status === 'valid' ? `<span style="font-size:0.62rem;color:var(--orange);white-space:nowrap;">${h.guests}p</span>` : ''}
+      ${h.status === 'used'  ? `<span style="font-size:0.62rem;color:#facc15;white-space:nowrap;">USADO</span>` : ''}
       <span class="hist-time">${h.time}</span>
     </div>
   `).join('');
