@@ -3,863 +3,974 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>QR Validator</title>
+<title>HalloWeen Town — Validador de Acceso</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;600;800&display=swap');
-
-  :root {
-    --bg: #050a0e;
-    --surface: #0d1b24;
-    --card: #0f2030;
-    --accent: #00e5ff;
-    --accent2: #00ff9d;
-    --danger: #ff3b5c;
-    --warn: #ffb400;
-    --text: #cfe8f5;
-    --muted: #4a7a9b;
-    --border: rgba(0,229,255,0.15);
-    --glow: 0 0 20px rgba(0,229,255,0.3);
-    --glow-green: 0 0 20px rgba(0,255,157,0.4);
-    --glow-red: 0 0 20px rgba(255,59,92,0.4);
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    font-family: 'Exo 2', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
-  }
-
-  /* Animated grid background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    z-index: 0;
-    pointer-events: none;
-  }
-
-  body::after {
-    content: '';
-    position: fixed;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(ellipse at 60% 20%, rgba(0,229,255,0.05) 0%, transparent 50%),
-                radial-gradient(ellipse at 20% 80%, rgba(0,255,157,0.04) 0%, transparent 40%);
-    z-index: 0;
-    pointer-events: none;
-    animation: ambientShift 12s ease-in-out infinite alternate;
-  }
-
-  @keyframes ambientShift {
-    from { transform: translate(0,0); }
-    to { transform: translate(3%, 2%); }
-  }
-
-  .container {
-    position: relative;
-    z-index: 1;
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 20px 16px 40px;
-  }
-
-  /* Header */
-  header {
-    text-align: center;
-    margin-bottom: 28px;
-    padding-top: 12px;
-  }
-
-  .logo-icon {
-    width: 52px;
-    height: 52px;
-    margin: 0 auto 10px;
-    position: relative;
-  }
-
-  .logo-icon svg { width: 100%; height: 100%; }
-
-  .logo-pulse {
-    position: absolute;
-    inset: -6px;
-    border: 1px solid var(--accent);
-    border-radius: 12px;
-    animation: logoPulse 2.5s ease-in-out infinite;
-    opacity: 0.4;
-  }
-
-  @keyframes logoPulse {
-    0%, 100% { transform: scale(1); opacity: 0.4; }
-    50% { transform: scale(1.12); opacity: 0.1; }
-  }
-
-  header h1 {
-    font-size: 1.7rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  header p {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--muted);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-top: 4px;
-  }
-
-  /* Status bar */
-  .status-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 14px;
-    margin-bottom: 18px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--muted);
-  }
-
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--muted);
-    flex-shrink: 0;
-    transition: background 0.3s, box-shadow 0.3s;
-  }
-
-  .status-dot.active {
-    background: var(--accent2);
-    box-shadow: 0 0 8px var(--accent2);
-    animation: dotPulse 1.2s ease-in-out infinite;
-  }
-
-  @keyframes dotPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-
-  .status-text { flex: 1; }
-
-  /* Camera section */
-  .camera-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    overflow: hidden;
-    margin-bottom: 18px;
-    position: relative;
-  }
-
-  .camera-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .camera-label {
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
-  .cam-badge {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--muted);
-    background: rgba(0,229,255,0.06);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 3px 8px;
-  }
-
-  #reader-wrapper {
-    position: relative;
-    background: #000;
-    min-height: 260px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #reader {
-    width: 100% !important;
-  }
-
-  #reader video {
-    border-radius: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-  }
-
-  /* Scanning overlay frame */
-  .scan-overlay {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-  }
-
-  .scan-frame {
-    width: 180px;
-    height: 180px;
-    position: relative;
-  }
-
-  .scan-frame::before, .scan-frame::after,
-  .scan-corner-br, .scan-corner-bl {
-    content: '';
-    position: absolute;
-    width: 28px;
-    height: 28px;
-    border-color: var(--accent);
-    border-style: solid;
-  }
-
-  .scan-frame::before { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
-  .scan-frame::after  { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
-  .scan-corner-br     { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
-  .scan-corner-bl     { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
-
-  .scan-line {
-    position: absolute;
-    left: 3px;
-    right: 3px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    top: 10%;
-    animation: scanLine 2.2s ease-in-out infinite;
-    box-shadow: 0 0 8px var(--accent);
-  }
-
-  @keyframes scanLine {
-    0%   { top: 10%; opacity: 1; }
-    45%  { top: 85%; opacity: 1; }
-    50%  { opacity: 0; }
-    55%  { top: 10%; opacity: 0; }
-    60%  { opacity: 1; }
-    100% { top: 85%; opacity: 1; }
-  }
-
-  .camera-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    padding: 40px 20px;
-    color: var(--muted);
-    text-align: center;
-  }
-
-  .camera-placeholder svg { opacity: 0.3; }
-  .camera-placeholder p { font-size: 0.8rem; line-height: 1.5; }
-
-  /* Buttons */
-  .btn-primary {
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, rgba(0,229,255,0.12), rgba(0,255,157,0.08));
-    border: 1px solid var(--accent);
-    border-radius: 14px;
-    color: var(--accent);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.25s;
-    box-shadow: var(--glow);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-  }
-
-  .btn-primary:active { transform: scale(0.97); opacity: 0.85; }
-
-  .btn-primary.scanning {
-    border-color: var(--danger);
-    color: var(--danger);
-    background: linear-gradient(135deg, rgba(255,59,92,0.1), rgba(255,59,92,0.05));
-    box-shadow: var(--glow-red);
-  }
-
-  .btn-secondary {
-    width: 100%;
-    padding: 12px;
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    color: var(--muted);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.25s;
-    margin-top: 10px;
-  }
-
-  .btn-secondary:active { opacity: 0.7; }
-
-  /* Result overlay */
-  .result-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 0 0 30px;
-    background: rgba(5,10,14,0.85);
-    backdrop-filter: blur(6px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.35s;
-  }
-
-  .result-overlay.show {
-    opacity: 1;
-    pointer-events: all;
-  }
-
-  .result-card {
-    width: 100%;
-    max-width: 440px;
-    margin: 0 16px;
-    background: var(--card);
-    border-radius: 24px;
-    overflow: hidden;
-    transform: translateY(60px);
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    border: 1px solid var(--border);
-  }
-
-  .result-overlay.show .result-card {
-    transform: translateY(0);
-  }
-
-  .result-header {
-    padding: 20px 20px 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .result-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    flex-shrink: 0;
-  }
-
-  .result-icon.valid   { background: rgba(0,255,157,0.12); box-shadow: var(--glow-green); }
-  .result-icon.invalid { background: rgba(255,59,92,0.12);  box-shadow: var(--glow-red); }
-
-  .result-title {
-    font-size: 1.1rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .result-title.valid   { color: var(--accent2); }
-  .result-title.invalid { color: var(--danger); }
-
-  .result-subtitle {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  .result-body {
-    padding: 0 20px 16px;
-  }
-
-  .result-code-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 14px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.85rem;
-    color: var(--text);
-    word-break: break-all;
-    margin-bottom: 14px;
-  }
-
-  .result-code-label {
-    font-size: 0.6rem;
-    font-weight: 600;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 5px;
-  }
-
-  .result-message {
-    font-size: 0.85rem;
-    line-height: 1.6;
-    color: var(--text);
-    margin-bottom: 16px;
-    padding: 12px 14px;
-    border-radius: 10px;
-  }
-
-  .result-message.valid   { background: rgba(0,255,157,0.07);  border-left: 3px solid var(--accent2); }
-  .result-message.invalid { background: rgba(255,59,92,0.07);   border-left: 3px solid var(--danger); }
-
-  .result-meta {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-
-  .meta-chip {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 10px;
-    text-align: center;
-  }
-
-  .meta-chip .label { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-  .meta-chip .value { font-family: 'Share Tech Mono', monospace; font-size: 0.78rem; color: var(--text); margin-top: 2px; }
-
-  .btn-close {
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, rgba(0,229,255,0.08), rgba(0,229,255,0.04));
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    color: var(--accent);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-close:active { opacity: 0.7; }
-
-  /* DB Section */
-  .section-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    overflow: hidden;
-    margin-top: 18px;
-  }
-
-  .section-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-  }
-
-  .section-head-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .section-title {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
-  .db-count {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--muted);
-    background: rgba(0,229,255,0.06);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 2px 10px;
-  }
-
-  .chevron {
-    font-size: 0.8rem;
-    color: var(--muted);
-    transition: transform 0.3s;
-  }
-
-  .chevron.open { transform: rotate(180deg); }
-
-  .section-body {
-    display: none;
-    padding: 14px;
-  }
-
-  .section-body.open { display: block; }
-
-  /* Add form */
-  .add-form {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-
-  .add-input {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 11px 13px;
-    color: var(--text);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.82rem;
-    outline: none;
-    transition: border-color 0.2s;
-    text-transform: uppercase;
-  }
-
-  .add-input::placeholder { color: var(--muted); text-transform: none; }
-  .add-input:focus { border-color: var(--accent); }
-
-  .btn-add {
-    padding: 11px 16px;
-    background: linear-gradient(135deg, rgba(0,229,255,0.15), rgba(0,255,157,0.1));
-    border: 1px solid var(--accent);
-    border-radius: 10px;
-    color: var(--accent);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-  }
-
-  .btn-add:active { opacity: 0.7; }
-
-  /* DB list */
-  .db-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 220px;
-    overflow-y: auto;
-  }
-
-  .db-list::-webkit-scrollbar { width: 4px; }
-  .db-list::-webkit-scrollbar-track { background: var(--surface); }
-  .db-list::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 4px; }
-
-  .db-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 9px 12px;
-    gap: 8px;
-  }
-
-  .db-item-code {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.78rem;
-    color: var(--text);
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .btn-delete {
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-size: 1rem;
-    cursor: pointer;
-    padding: 2px 4px;
-    line-height: 1;
-    transition: color 0.2s;
-    flex-shrink: 0;
-  }
-
-  .btn-delete:hover { color: var(--danger); }
-
-  /* History */
-  .history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 200px;
-    overflow-y: auto;
-  }
-
-  .history-list::-webkit-scrollbar { width: 4px; }
-  .history-list::-webkit-scrollbar-track { background: var(--surface); }
-  .history-list::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 4px; }
-
-  .history-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 9px 12px;
-  }
-
-  .history-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .history-dot.valid   { background: var(--accent2); }
-  .history-dot.invalid { background: var(--danger); }
-
-  .history-code {
-    flex: 1;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.73rem;
-    color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .history-time {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.62rem;
-    color: var(--muted);
-    white-space: nowrap;
-  }
-
-  .empty-state {
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.78rem;
-    padding: 20px;
-    font-family: 'Share Tech Mono', monospace;
-  }
-
-  /* Ripple on scan */
-  .scan-ripple {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 20;
-    display: none;
-  }
-
-  .scan-ripple.active { display: block; animation: scanRipple 0.5s ease-out forwards; }
-
-  @keyframes scanRipple {
-    0%   { background: rgba(0,229,255,0.2); }
-    100% { background: transparent; }
-  }
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --black: #0a0a0a;
+  --dark: #111111;
+  --card: #181818;
+  --orange: #f5620f;
+  --orange2: #ff8c00;
+  --purple: #6b21a8;
+  --purple2: #a855f7;
+  --cream: #fdf6ec;
+  --gray: #888;
+  --border: rgba(255,255,255,0.08);
+  --text: #f0ebe3;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--black);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Top event banner ── */
+.event-banner {
+  background: linear-gradient(135deg, #1a0a00 0%, #0f0015 50%, #1a0500 100%);
+  border-bottom: 1px solid rgba(245,98,15,0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.event-banner::before {
+  content: '';
+  position: absolute;
+  top: -60px; left: -60px;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(245,98,15,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.event-banner::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; right: -40px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(107,33,168,0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Top bar like Ticketmaster */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.tm-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  color: var(--orange);
+}
+
+.tm-badge {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+
+/* Event header */
+.event-header {
+  padding: 20px 16px 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.event-category {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.event-category::before {
+  content: '';
+  width: 18px; height: 1px;
+  background: var(--orange);
+  display: inline-block;
+}
+
+.event-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.6rem;
+  line-height: 0.95;
+  letter-spacing: 0.03em;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #ffffff 30%, #ffd580 70%, #f5620f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.event-meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.meta-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.meta-value.time { color: var(--orange2); }
+
+/* Ticket stub separator */
+.stub-sep {
+  display: flex;
+  align-items: center;
+  background: var(--dark);
+  border-top: 1px dashed rgba(255,255,255,0.12);
+  border-bottom: 1px dashed rgba(255,255,255,0.12);
+  padding: 0;
+  position: relative;
+}
+
+.stub-sep::before, .stub-sep::after {
+  content: '';
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--black);
+  flex-shrink: 0;
+  border: 1px dashed rgba(255,255,255,0.12);
+}
+
+.stub-sep-line {
+  flex: 1;
+  height: 1px;
+  border-top: 2px dashed rgba(255,255,255,0.1);
+  margin: 0 -1px;
+}
+
+.stub-sep-text {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--dark);
+  padding: 0 10px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gray);
+  white-space: nowrap;
+}
+
+/* ── Main content ── */
+.container {
+  padding: 20px 16px 40px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Status chip */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--gray);
+  margin-bottom: 18px;
+  width: 100%;
+}
+
+.chip-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--gray);
+  flex-shrink: 0;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.chip-dot.live {
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Camera zone */
+.cam-zone {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.cam-zone-header {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cam-zone-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+}
+
+.cam-status-pill {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 20px;
+  padding: 3px 10px;
+  background: rgba(255,255,255,0.06);
+  color: var(--gray);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.3s;
+}
+
+.cam-status-pill.live {
+  background: rgba(34,197,94,0.1);
+  color: #22c55e;
+  border-color: rgba(34,197,94,0.3);
+}
+
+#reader-wrap {
+  position: relative;
+  background: #000;
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#reader { width: 100% !important; }
+#reader video { width: 100% !important; height: auto !important; }
+
+.scan-frame-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.scan-box {
+  width: 172px; height: 172px;
+  position: relative;
+}
+
+.sc::before,.sc::after,.sc2,.sc3 {
+  content: '';
+  position: absolute;
+  width: 26px; height: 26px;
+  border-color: var(--orange);
+  border-style: solid;
+}
+.sc::before { top:0;left:0; border-width:3px 0 0 3px; border-radius:3px 0 0 0; }
+.sc::after  { top:0;right:0; border-width:3px 3px 0 0; border-radius:0 3px 0 0; }
+.sc2 { bottom:0;right:0; border-width:0 3px 3px 0; border-radius:0 0 3px 0; }
+.sc3 { bottom:0;left:0;  border-width:0 0 3px 3px; border-radius:0 0 0 3px; }
+
+.scan-sweep {
+  position: absolute;
+  left: 3px; right: 3px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--orange), transparent);
+  box-shadow: 0 0 10px var(--orange);
+  top: 10%;
+  animation: sweep 2s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  0%   { top:10%; opacity:1; }
+  45%  { top:88%; opacity:1; }
+  50%  { opacity:0; }
+  55%  { top:10%; opacity:0; }
+  60%  { opacity:1; }
+  100% { top:88%; opacity:1; }
+}
+
+.placeholder-cam {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 20px;
+  color: rgba(255,255,255,0.2);
+  text-align: center;
+}
+
+.placeholder-cam svg { opacity: 0.25; }
+.placeholder-cam p { font-size: 0.78rem; line-height: 1.5; }
+
+/* Scan button — Ticketmaster style orange CTA */
+.btn-scan {
+  width: 100%;
+  padding: 17px;
+  background: var(--orange);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.2s, transform 0.15s;
+  text-transform: uppercase;
+}
+
+.btn-scan:active { transform: scale(0.97); background: #d44c08; }
+
+.btn-scan.stop {
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.6);
+}
+
+/* Sections */
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.sec-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+}
+
+.sec-count {
+  font-size: 0.62rem;
+  font-weight: 600;
+  background: rgba(245,98,15,0.12);
+  color: var(--orange);
+  border: 1px solid rgba(245,98,15,0.25);
+  border-radius: 20px;
+  padding: 2px 10px;
+}
+
+.chevron {
+  font-size: 0.7rem;
+  color: var(--gray);
+  transition: transform 0.25s;
+}
+.chevron.open { transform: rotate(180deg); }
+
+.sec-body { display: none; padding: 14px; }
+.sec-body.open { display: block; }
+
+/* DB Add form */
+.add-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.code-input {
+  flex: 1;
+  background: #222;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: 'DM Sans', monospace;
+  font-size: 0.8rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.code-input:focus { border-color: var(--orange); }
+.code-input::placeholder { color: rgba(255,255,255,0.2); }
+
+.btn-add {
+  padding: 10px 14px;
+  background: rgba(245,98,15,0.15);
+  border: 1px solid rgba(245,98,15,0.4);
+  border-radius: 8px;
+  color: var(--orange);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.btn-add:active { opacity: 0.7; }
+
+.db-scroll { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+.db-scroll::-webkit-scrollbar { width: 3px; }
+.db-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+.db-row {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 9px 12px;
+  gap: 8px;
+}
+
+.db-code {
+  flex: 1;
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-del {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.2);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color 0.2s;
+}
+
+.btn-del:hover { color: #ef4444; }
+
+/* History */
+.hist-scroll { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+.hist-scroll::-webkit-scrollbar { width: 3px; }
+.hist-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+.hist-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.hist-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.hist-dot.v { background: #22c55e; }
+.hist-dot.i { background: #ef4444; }
+
+.hist-code { flex: 1; font-family: monospace; font-size: 0.72rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist-time { font-size: 0.62rem; color: var(--gray); white-space: nowrap; }
+
+.empty { text-align: center; font-size: 0.75rem; color: rgba(255,255,255,0.2); padding: 16px; }
+
+/* ── Result Modal — Ticket style ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.88);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  backdrop-filter: blur(8px);
+}
+
+.overlay.show { opacity: 1; pointer-events: all; }
+
+.ticket-card {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 16px;
+  border-radius: 20px;
+  overflow: hidden;
+  transform: translateY(50px);
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+}
+
+.overlay.show .ticket-card { transform: translateY(0); }
+
+/* Top half of ticket */
+.ticket-top {
+  padding: 0;
+  position: relative;
+}
+
+.ticket-top-inner {
+  padding: 24px 22px 20px;
+}
+
+.ticket-top.valid { background: linear-gradient(135deg, #052a10 0%, #0a1a0a 100%); }
+.ticket-top.invalid { background: linear-gradient(135deg, #2a0505 0%, #1a0a0a 100%); }
+
+.result-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.result-icon {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.result-icon.valid { background: rgba(34,197,94,0.15); border: 1.5px solid rgba(34,197,94,0.4); }
+.result-icon.invalid { background: rgba(239,68,68,0.15); border: 1.5px solid rgba(239,68,68,0.4); }
+
+.result-headline { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 0.04em; line-height: 1; }
+.result-headline.valid { color: #4ade80; }
+.result-headline.invalid { color: #f87171; }
+
+.result-sub { font-size: 0.75rem; color: rgba(255,255,255,0.45); margin-top: 3px; }
+
+/* Ticket info grid */
+.ticket-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tinfo {
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.tinfo-label {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 4px;
+}
+
+.tinfo-value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.tinfo-value.accent { color: var(--orange2); }
+.tinfo-value.big { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 0.05em; }
+
+/* Scanned code box */
+.code-box {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.code-box-label {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 4px;
+}
+
+.code-box-value {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: var(--cream);
+  word-break: break-all;
+}
+
+/* Ticket tear line */
+.tear-line {
+  display: flex;
+  align-items: center;
+  background: #111;
+  border-top: 1px dashed rgba(255,255,255,0.1);
+  border-bottom: 1px dashed rgba(255,255,255,0.1);
+}
+
+.tear-circle {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.88);
+  flex-shrink: 0;
+}
+
+.tear-dashes { flex: 1; border-top: 2px dashed rgba(255,255,255,0.08); }
+
+/* Ticket bottom */
+.ticket-bottom {
+  background: #141414;
+  padding: 18px 22px;
+}
+
+.tb-event-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tb-event-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
+  color: var(--orange);
+}
+
+.tb-guests {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.06);
+  border-radius: 20px;
+  padding: 3px 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  white-space: nowrap;
+}
+
+.btn-close-ticket {
+  width: 100%;
+  padding: 15px;
+  background: var(--orange);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-close-ticket:active { background: #d44c08; }
+
+/* Guests selector in DB */
+.guests-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.guests-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  flex: 1;
+}
+
+.guest-select {
+  background: rgba(245,98,15,0.1);
+  border: 1px solid rgba(245,98,15,0.3);
+  border-radius: 6px;
+  color: var(--orange);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  outline: none;
+  cursor: pointer;
+}
+
+.guest-select option { background: #1a1a1a; }
+
+/* ripple */
+.ripple-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  display: none;
+}
+
+.ripple-flash.pop {
+  display: block;
+  animation: rflash 0.4s ease-out forwards;
+}
+
+@keyframes rflash {
+  0% { background: rgba(245,98,15,0.2); }
+  100% { background: transparent; }
+}
 </style>
 </head>
 <body>
+
+<!-- ── EVENT BANNER ── -->
+<div class="event-banner">
+  <div class="top-bar">
+    <span class="tm-logo">&#9679; ValidarAcceso</span>
+    <span class="tm-badge">Control de Acceso</span>
+  </div>
+  <div class="event-header">
+    <div class="event-category">Evento de Temporada</div>
+    <div class="event-name">HalloWeen<br>Town</div>
+    <div class="event-meta">
+      <div class="meta-item">
+        <span class="meta-label">Fecha</span>
+        <span class="meta-value">Halloween 2025</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Horario</span>
+        <span class="meta-value time">8:00 PM</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Acceso</span>
+        <span class="meta-value">Con QR</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stub-sep">
+  <div class="stub-sep-line"></div>
+  <span class="stub-sep-text">validar boleto</span>
+</div>
+
+<!-- ── MAIN ── -->
 <div class="container">
 
-  <!-- Header -->
-  <header>
-    <div class="logo-icon">
-      <div class="logo-pulse"></div>
-      <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="4" width="18" height="18" rx="2" stroke="#00e5ff" stroke-width="2"/>
-        <rect x="8" y="8" width="10" height="10" fill="#00e5ff" fill-opacity="0.4"/>
-        <rect x="30" y="4" width="18" height="18" rx="2" stroke="#00e5ff" stroke-width="2"/>
-        <rect x="34" y="8" width="10" height="10" fill="#00e5ff" fill-opacity="0.4"/>
-        <rect x="4" y="30" width="18" height="18" rx="2" stroke="#00e5ff" stroke-width="2"/>
-        <rect x="8" y="34" width="10" height="10" fill="#00e5ff" fill-opacity="0.4"/>
-        <rect x="30" y="30" width="5" height="5" fill="#00ff9d"/>
-        <rect x="37" y="30" width="5" height="5" fill="#00ff9d"/>
-        <rect x="30" y="37" width="5" height="5" fill="#00ff9d"/>
-        <rect x="37" y="37" width="11" height="11" rx="1" fill="#00ff9d" fill-opacity="0.5"/>
-      </svg>
-    </div>
-    <h1>QR Validator</h1>
-    <p>Sistema de control de acceso · v2.1</p>
-  </header>
-
-  <!-- Status bar -->
-  <div class="status-bar">
-    <div class="status-dot" id="statusDot"></div>
-    <span class="status-text" id="statusText">Sistema listo — presiona escanear</span>
+  <div class="status-chip">
+    <div class="chip-dot" id="statusDot"></div>
+    <span id="statusText">Sistema listo — presiona para escanear</span>
   </div>
 
-  <!-- Camera card -->
-  <div class="camera-card">
-    <div class="camera-header">
-      <span class="camera-label">&#9654; Lector de cámara</span>
-      <span class="cam-badge" id="camBadge">CAM INACTIVA</span>
+  <!-- Camera -->
+  <div class="cam-zone">
+    <div class="cam-zone-header">
+      <span class="cam-zone-label">Lector QR</span>
+      <span class="cam-status-pill" id="camPill">Inactivo</span>
     </div>
-    <div id="reader-wrapper">
+    <div id="reader-wrap">
       <div id="reader"></div>
-      <div class="scan-overlay" id="scanOverlay" style="display:none;">
-        <div class="scan-frame">
-          <div class="scan-corner-br"></div>
-          <div class="scan-corner-bl"></div>
-          <div class="scan-line"></div>
+      <div class="scan-frame-overlay" id="scanOverlay" style="display:none;">
+        <div class="scan-box sc">
+          <div class="sc2"></div>
+          <div class="sc3"></div>
+          <div class="scan-sweep"></div>
         </div>
       </div>
-      <div class="scan-ripple" id="scanRipple"></div>
-      <div class="camera-placeholder" id="cameraPlaceholder">
-        <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-          <path d="M20 10H10a2 2 0 0 0-2 2v10M36 10h10a2 2 0 0 1 2 2v10M20 46H10a2 2 0 0 1-2-2V34M36 46h10a2 2 0 0 0 2-2V34" stroke="#4a7a9b" stroke-width="2.5" stroke-linecap="round"/>
-          <circle cx="28" cy="28" r="8" stroke="#4a7a9b" stroke-width="2"/>
-          <circle cx="28" cy="28" r="3" fill="#4a7a9b" fill-opacity="0.4"/>
+      <div class="ripple-flash" id="rippleFlash"></div>
+      <div class="placeholder-cam" id="camPlaceholder">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <path d="M18 8H10a2 2 0 0 0-2 2v8M34 8h8a2 2 0 0 1 2 2v8M18 44H10a2 2 0 0 1-2-2v-8M34 44h8a2 2 0 0 0 2-2v-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="26" cy="26" r="7" stroke="currentColor" stroke-width="2"/>
+          <circle cx="26" cy="26" r="2.5" fill="currentColor" opacity="0.4"/>
         </svg>
-        <p>Activa la cámara para<br>escanear un código QR</p>
+        <p>Activa la cámara para<br>escanear el boleto QR</p>
       </div>
     </div>
   </div>
 
-  <!-- Scan button -->
-  <button class="btn-primary" id="scanBtn" onclick="toggleScan()">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
-      <rect x="7" y="7" width="10" height="10" rx="1"/>
+  <button class="btn-scan" id="scanBtn" onclick="toggleScan()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/>
     </svg>
-    <span id="scanBtnText">Iniciar Escaneo</span>
+    <span id="scanBtnText">Escanear Boleto</span>
   </button>
 
   <!-- DB Section -->
-  <div class="section-card">
-    <div class="section-head" onclick="toggleSection('db')">
-      <div class="section-head-left">
-        <span class="section-title">&#128197; Base de Datos</span>
-        <span class="db-count" id="dbCount">15 códigos</span>
+  <div class="section">
+    <div class="sec-head" onclick="toggleSec('db')">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="sec-title">Base de datos</span>
+        <span class="sec-count" id="dbCount">15 accesos</span>
       </div>
-      <span class="chevron" id="dbChevron">&#9660;</span>
+      <span class="chevron" id="dbChev">&#9660;</span>
     </div>
-    <div class="section-body" id="dbBody">
-      <div class="add-form">
-        <input class="add-input" id="newCode" placeholder="Ingresa código nuevo..." maxlength="40" oninput="this.value = this.value.toUpperCase()">
+    <div class="sec-body" id="dbBody">
+      <div class="add-row">
+        <input class="code-input" id="newCode" placeholder="Nuevo código de acceso..." maxlength="40" oninput="this.value=this.value.toUpperCase()">
         <button class="btn-add" onclick="addCode()">+ Agregar</button>
       </div>
-      <div class="db-list" id="dbList"></div>
+      <div class="db-scroll" id="dbList"></div>
     </div>
   </div>
 
-  <!-- History Section -->
-  <div class="section-card">
-    <div class="section-head" onclick="toggleSection('hist')">
-      <div class="section-head-left">
-        <span class="section-title">&#128338; Historial</span>
-        <span class="db-count" id="histCount">0 escaneos</span>
+  <!-- History -->
+  <div class="section">
+    <div class="sec-head" onclick="toggleSec('hist')">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="sec-title">Historial</span>
+        <span class="sec-count" id="histCount">0 escaneos</span>
       </div>
-      <span class="chevron" id="histChevron">&#9660;</span>
+      <span class="chevron" id="histChev">&#9660;</span>
     </div>
-    <div class="section-body" id="histBody">
-      <div class="history-list" id="histList">
-        <p class="empty-state">Sin escaneos aún</p>
-      </div>
+    <div class="sec-body" id="histBody">
+      <div class="hist-scroll" id="histList"><p class="empty">Sin escaneos aún</p></div>
     </div>
   </div>
 
 </div>
 
-<!-- Result overlay -->
-<div class="result-overlay" id="resultOverlay" onclick="closeResult(event)">
-  <div class="result-card" onclick="event.stopPropagation()">
-    <div class="result-header">
-      <div class="result-icon" id="resultIcon"></div>
-      <div>
-        <div class="result-title" id="resultTitle"></div>
-        <div class="result-subtitle" id="resultSubtitle"></div>
+<!-- ── RESULT OVERLAY — Ticket style ── -->
+<div class="overlay" id="overlay" onclick="tryClose(event)">
+  <div class="ticket-card" onclick="event.stopPropagation()">
+
+    <!-- Ticket top -->
+    <div class="ticket-top" id="ticketTop">
+      <div class="ticket-top-inner">
+        <div class="result-icon-row">
+          <div class="result-icon" id="resIcon"></div>
+          <div>
+            <div class="result-headline" id="resHeadline"></div>
+            <div class="result-sub" id="resSub"></div>
+          </div>
+        </div>
+
+        <!-- Info grid -->
+        <div class="ticket-info-grid">
+          <div class="tinfo">
+            <div class="tinfo-label">Evento</div>
+            <div class="tinfo-value">HalloWeen Town</div>
+          </div>
+          <div class="tinfo">
+            <div class="tinfo-label">Horario</div>
+            <div class="tinfo-value accent">8:00 PM</div>
+          </div>
+          <div class="tinfo">
+            <div class="tinfo-label">Personas</div>
+            <div class="tinfo-value big" id="resGuests">—</div>
+          </div>
+          <div class="tinfo">
+            <div class="tinfo-label">Hora de escaneo</div>
+            <div class="tinfo-value accent" id="resTime">—</div>
+          </div>
+        </div>
+
+        <div class="code-box">
+          <div class="code-box-label">Código escaneado</div>
+          <div class="code-box-value" id="resCode"></div>
+        </div>
       </div>
     </div>
-    <div class="result-body">
-      <div class="result-code-box">
-        <div class="result-code-label">Código escaneado</div>
-        <div id="resultCode"></div>
-      </div>
-      <div class="result-message" id="resultMessage"></div>
-      <div class="result-meta">
-        <div class="meta-chip">
-          <div class="label">Estado</div>
-          <div class="value" id="metaStatus"></div>
-        </div>
-        <div class="meta-chip">
-          <div class="label">Hora</div>
-          <div class="value" id="metaTime"></div>
-        </div>
-        <div class="meta-chip">
-          <div class="label">Total BD</div>
-          <div class="value" id="metaDb"></div>
-        </div>
-      </div>
-      <button class="btn-close" onclick="closeResult()">Continuar Escaneando</button>
+
+    <!-- Tear line -->
+    <div class="tear-line">
+      <div class="tear-circle"></div>
+      <div class="tear-dashes"></div>
+      <div class="tear-circle"></div>
     </div>
+
+    <!-- Ticket bottom -->
+    <div class="ticket-bottom">
+      <div class="tb-event-row">
+        <span class="tb-event-name">&#127875; HalloWeen Town</span>
+        <span class="tb-guests" id="tbGuests"></span>
+      </div>
+      <button class="btn-close-ticket" onclick="closeOverlay()">Continuar Escaneando</button>
+    </div>
+
   </div>
 </div>
 
 <script>
-// ─── Database ────────────────────────────────────────────────────────────────
-let qrDatabase = [
-  "A3K9-XM72-PQ41","BT56-NR18-WZ93","CY84-LH37-VF62",
-  "DG21-SK95-JU48","EQ73-OB64-MT15","FW39-IC82-AH57",
-  "GN16-ZD43-RK90","HU52-YP71-SB28","IJ87-WE56-NQ34",
-  "KX44-FM19-TC76","LR60-AV93-DG21","MO35-KT48-EH87",
-  "NB91-SQ27-IL53","OD78-RN64-UJ12","PC23-HZ80-YM45"
+// ─── Database with guests per code ───────────────────────────────────────────
+// Each entry: { code, guests }
+let qrDB = [
+  { code: "A3K9-XM72-PQ41", guests: 2 },
+  { code: "BT56-NR18-WZ93", guests: 1 },
+  { code: "CY84-LH37-VF62", guests: 4 },
+  { code: "DG21-SK95-JU48", guests: 1 },
+  { code: "EQ73-OB64-MT15", guests: 3 },
+  { code: "FW39-IC82-AH57", guests: 2 },
+  { code: "GN16-ZD43-RK90", guests: 1 },
+  { code: "HU52-YP71-SB28", guests: 6 },
+  { code: "IJ87-WE56-NQ34", guests: 2 },
+  { code: "KX44-FM19-TC76", guests: 1 },
+  { code: "LR60-AV93-DG21", guests: 4 },
+  { code: "MO35-KT48-EH87", guests: 2 },
+  { code: "NB91-SQ27-IL53", guests: 3 },
+  { code: "OD78-RN64-UJ12", guests: 1 },
+  { code: "PC23-HZ80-YM45", guests: 5 },
 ];
 
-let scanHistory = [];
+let history = [];
 let scanner = null;
-let isScanning = false;
+let scanning = false;
+let defaultGuests = 1;
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
 renderDB();
 
-// ─── Scanner ──────────────────────────────────────────────────────────────────
+// ─── Scanner ─────────────────────────────────────────────────────────────────
 async function toggleScan() {
-  if (!isScanning) {
-    await startScan();
-  } else {
-    await stopScan();
-  }
+  scanning ? await stopScan() : await startScan();
 }
 
 async function startScan() {
@@ -867,112 +978,102 @@ async function startScan() {
     scanner = new Html5Qrcode("reader");
     await scanner.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: { width: 200, height: 200 } },
-      onScanSuccess,
-      () => {}
+      { fps: 10, qrbox: { width: 190, height: 190 } },
+      onScan, () => {}
     );
-    isScanning = true;
-    document.getElementById('cameraPlaceholder').style.display = 'none';
+    scanning = true;
+    document.getElementById('camPlaceholder').style.display = 'none';
     document.getElementById('scanOverlay').style.display = 'flex';
-    document.getElementById('scanBtn').classList.add('scanning');
-    document.getElementById('scanBtnText').textContent = 'Detener Escaneo';
-    document.getElementById('statusDot').classList.add('active');
+    document.getElementById('scanBtn').classList.add('stop');
+    document.getElementById('scanBtnText').textContent = 'Detener Escáner';
+    document.getElementById('statusDot').classList.add('live');
     document.getElementById('statusText').textContent = 'Cámara activa — apunta al código QR';
-    document.getElementById('camBadge').textContent = 'CAM ACTIVA';
+    document.getElementById('camPill').textContent = 'EN VIVO';
+    document.getElementById('camPill').classList.add('live');
   } catch(e) {
-    setStatus('Error al acceder a la cámara');
+    document.getElementById('statusText').textContent = 'Error al acceder a la cámara';
   }
 }
 
 async function stopScan() {
-  if (scanner && isScanning) {
-    try { await scanner.stop(); } catch(e) {}
-    scanner = null;
-  }
-  isScanning = false;
-  document.getElementById('cameraPlaceholder').style.display = 'flex';
+  if (scanner && scanning) { try { await scanner.stop(); } catch(e) {} scanner = null; }
+  scanning = false;
+  document.getElementById('camPlaceholder').style.display = 'flex';
   document.getElementById('scanOverlay').style.display = 'none';
-  document.getElementById('scanBtn').classList.remove('scanning');
-  document.getElementById('scanBtnText').textContent = 'Iniciar Escaneo';
-  document.getElementById('statusDot').classList.remove('active');
-  document.getElementById('statusText').textContent = 'Sistema listo — presiona escanear';
-  document.getElementById('camBadge').textContent = 'CAM INACTIVA';
+  document.getElementById('scanBtn').classList.remove('stop');
+  document.getElementById('scanBtnText').textContent = 'Escanear Boleto';
+  document.getElementById('statusDot').classList.remove('live');
+  document.getElementById('statusText').textContent = 'Sistema listo — presiona para escanear';
+  document.getElementById('camPill').textContent = 'Inactivo';
+  document.getElementById('camPill').classList.remove('live');
 }
 
-function onScanSuccess(decodedText) {
-  // Ripple effect
-  const ripple = document.getElementById('scanRipple');
-  ripple.classList.remove('active');
-  void ripple.offsetWidth;
-  ripple.classList.add('active');
-
-  const code = decodedText.trim().toUpperCase();
-  const isValid = qrDatabase.includes(code);
+function onScan(raw) {
+  const code = raw.trim().toUpperCase();
+  const entry = qrDB.find(e => e.code === code);
+  const valid = !!entry;
+  const guests = entry ? entry.guests : 0;
   const now = new Date();
-  const timeStr = now.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const time = now.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
 
-  // Add to history
-  scanHistory.unshift({ code, valid: isValid, time: timeStr });
+  // Flash
+  const rf = document.getElementById('rippleFlash');
+  rf.classList.remove('pop');
+  void rf.offsetWidth;
+  rf.classList.add('pop');
+
+  history.unshift({ code, valid, guests, time });
   renderHistory();
-
-  // Show result
-  showResult(code, isValid, timeStr);
-
-  // Vibrate
-  if (navigator.vibrate) navigator.vibrate(isValid ? [80, 40, 80] : [200]);
+  showTicket(code, valid, guests, time);
+  if (navigator.vibrate) navigator.vibrate(valid ? [70,40,70] : [200]);
 }
 
-// ─── Result Modal ─────────────────────────────────────────────────────────────
-function showResult(code, isValid, timeStr) {
-  const icon  = document.getElementById('resultIcon');
-  const title = document.getElementById('resultTitle');
-  const sub   = document.getElementById('resultSubtitle');
-  const msg   = document.getElementById('resultMessage');
-  const rc    = document.getElementById('resultCode');
-  const ms    = document.getElementById('metaStatus');
-  const mt    = document.getElementById('metaTime');
-  const mdb   = document.getElementById('metaDb');
+// ─── Ticket Result ────────────────────────────────────────────────────────────
+function showTicket(code, valid, guests, time) {
+  const top = document.getElementById('ticketTop');
+  top.className = `ticket-top ${valid ? 'valid' : 'invalid'}`;
 
-  icon.className  = `result-icon ${isValid ? 'valid' : 'invalid'}`;
-  icon.textContent = isValid ? '✅' : '❌';
-  title.className = `result-title ${isValid ? 'valid' : 'invalid'}`;
-  title.textContent = isValid ? 'Acceso Permitido' : 'Acceso Denegado';
-  sub.textContent   = isValid ? 'Código QR reconocido en el sistema' : 'Código QR no registrado';
-  rc.textContent    = code;
-  msg.className     = `result-message ${isValid ? 'valid' : 'invalid'}`;
-  msg.textContent   = isValid
-    ? '✔ El código QR es válido y se encuentra registrado en la base de datos. Acceso autorizado.'
-    : '✘ El código QR escaneado no existe en la base de datos. Acceso no autorizado.';
-  ms.textContent    = isValid ? 'VÁLIDO' : 'INVÁLIDO';
-  mt.textContent    = timeStr;
-  mdb.textContent   = `${qrDatabase.length}`;
+  const icon = document.getElementById('resIcon');
+  icon.className = `result-icon ${valid ? 'valid' : 'invalid'}`;
+  icon.textContent = valid ? '✅' : '❌';
 
-  const overlay = document.getElementById('resultOverlay');
-  overlay.classList.add('show');
+  document.getElementById('resHeadline').className = `result-headline ${valid ? 'valid' : 'invalid'}`;
+  document.getElementById('resHeadline').textContent = valid ? 'Acceso Permitido' : 'Acceso Denegado';
+  document.getElementById('resSub').textContent = valid
+    ? 'Boleto válido — bienvenido al evento'
+    : 'Boleto no encontrado en el sistema';
+
+  document.getElementById('resCode').textContent = code;
+  document.getElementById('resTime').textContent = time;
+
+  const guestLabel = valid
+    ? `${guests} ${guests === 1 ? 'persona' : 'personas'}`
+    : '—';
+  document.getElementById('resGuests').textContent = guestLabel;
+  document.getElementById('tbGuests').textContent = valid ? `${guests} ${guests===1?'persona':'personas'}` : 'No autorizado';
+
+  document.getElementById('overlay').classList.add('show');
 }
 
-function closeResult(e) {
-  if (e && e.target !== document.getElementById('resultOverlay')) return;
-  document.getElementById('resultOverlay').classList.remove('show');
-  setStatus('Listo para el siguiente escaneo');
+function closeOverlay() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('statusText').textContent = 'Listo para el siguiente boleto';
 }
 
-document.getElementById('resultOverlay').addEventListener('click', function(e) {
-  if (e.target === this) closeResult(e);
-});
+function tryClose(e) {
+  if (e.target === document.getElementById('overlay')) closeOverlay();
+}
 
-// ─── DB Management ────────────────────────────────────────────────────────────
+// ─── DB ───────────────────────────────────────────────────────────────────────
 function renderDB() {
+  document.getElementById('dbCount').textContent = `${qrDB.length} accesos`;
   const list = document.getElementById('dbList');
-  document.getElementById('dbCount').textContent = `${qrDatabase.length} códigos`;
-  if (!qrDatabase.length) {
-    list.innerHTML = '<p class="empty-state">Base de datos vacía</p>';
-    return;
-  }
-  list.innerHTML = qrDatabase.map((c, i) => `
-    <div class="db-item">
-      <span class="db-item-code">${c}</span>
-      <button class="btn-delete" onclick="deleteCode(${i})" title="Eliminar">&#10005;</button>
+  if (!qrDB.length) { list.innerHTML = '<p class="empty">Base de datos vacía</p>'; return; }
+  list.innerHTML = qrDB.map((e, i) => `
+    <div class="db-row">
+      <span class="db-code">${e.code}</span>
+      <span style="font-size:0.65rem;color:var(--orange);white-space:nowrap;margin-right:4px;">${e.guests}p</span>
+      <button class="btn-del" onclick="delCode(${i})">✕</button>
     </div>
   `).join('');
 }
@@ -981,54 +1082,38 @@ function addCode() {
   const inp = document.getElementById('newCode');
   const val = inp.value.trim();
   if (!val) return;
-  if (qrDatabase.includes(val)) {
-    inp.style.borderColor = 'var(--warn)';
-    setTimeout(() => inp.style.borderColor = '', 1200);
-    return;
-  }
-  qrDatabase.push(val);
+  if (qrDB.find(e => e.code === val)) { inp.style.borderColor = 'var(--orange2)'; setTimeout(()=>inp.style.borderColor='',1200); return; }
+  const g = parseInt(prompt('¿Para cuántas personas es este acceso?', '1')) || 1;
+  qrDB.push({ code: val, guests: g });
   inp.value = '';
   renderDB();
-  setStatus(`Código "${val}" agregado a la base de datos`);
 }
 
-function deleteCode(i) {
-  qrDatabase.splice(i, 1);
-  renderDB();
-}
+function delCode(i) { qrDB.splice(i,1); renderDB(); }
 
-document.getElementById('newCode').addEventListener('keydown', e => {
-  if (e.key === 'Enter') addCode();
-});
+document.getElementById('newCode').addEventListener('keydown', e => { if(e.key==='Enter') addCode(); });
 
 // ─── History ──────────────────────────────────────────────────────────────────
 function renderHistory() {
+  document.getElementById('histCount').textContent = `${history.length} escaneos`;
   const list = document.getElementById('histList');
-  document.getElementById('histCount').textContent = `${scanHistory.length} escaneos`;
-  if (!scanHistory.length) {
-    list.innerHTML = '<p class="empty-state">Sin escaneos aún</p>';
-    return;
-  }
-  list.innerHTML = scanHistory.slice(0,30).map(h => `
-    <div class="history-item">
-      <div class="history-dot ${h.valid ? 'valid' : 'invalid'}"></div>
-      <span class="history-code">${h.code}</span>
-      <span class="history-time">${h.time}</span>
+  if (!history.length) { list.innerHTML = '<p class="empty">Sin escaneos aún</p>'; return; }
+  list.innerHTML = history.slice(0,30).map(h => `
+    <div class="hist-row">
+      <div class="hist-dot ${h.valid?'v':'i'}"></div>
+      <span class="hist-code">${h.code}</span>
+      ${h.valid ? `<span style="font-size:0.62rem;color:var(--orange);white-space:nowrap;">${h.guests}p</span>` : ''}
+      <span class="hist-time">${h.time}</span>
     </div>
   `).join('');
 }
 
-// ─── Sections toggle ──────────────────────────────────────────────────────────
-function toggleSection(id) {
-  const body    = document.getElementById(id === 'db' ? 'dbBody' : 'histBody');
-  const chevron = document.getElementById(id === 'db' ? 'dbChevron' : 'histChevron');
+// ─── Sections ─────────────────────────────────────────────────────────────────
+function toggleSec(id) {
+  const body = document.getElementById(id==='db'?'dbBody':'histBody');
+  const chev = document.getElementById(id==='db'?'dbChev':'histChev');
   body.classList.toggle('open');
-  chevron.classList.toggle('open');
-}
-
-// ─── Utils ────────────────────────────────────────────────────────────────────
-function setStatus(msg) {
-  document.getElementById('statusText').textContent = msg;
+  chev.classList.toggle('open');
 }
 </script>
 </body>
